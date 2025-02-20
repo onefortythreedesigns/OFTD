@@ -1,0 +1,92 @@
+name: Testing Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        working-directory: back-end
+        run: |
+          python3 -m venv .venv
+          source .venv/bin/activate
+          python3 -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests
+        working-directory: back-end
+        run: |
+          source .venv/bin/activate
+          coverage run manage.py test
+          coverage report --fail-under=80
+          coverage xml -o coverage.xml
+
+        - name: Upload coverage report
+          uses: actions/upload-artifact@v3
+          with:
+            name: backend-coverage-report
+            path: back-end/coverage.xml
+
+  test-frontend-crm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        working-directory: front-end/crm
+        run: |
+          npm install
+
+      - name: Run tests
+        working-directory: front-end/crm
+        run: npm test -- --code-coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: crm-coverage-report
+          path: front-end/crm/coverage
+  
+  test-frontend-ecommerce:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        working-directory: front-end/ecommerce
+        run: |
+          npm install
+
+      - name: Run tests
+        working-directory: front-end/ecommerce
+        run: npm test -- --code-coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: ecommerce-coverage-report
+          path: front-end/ecommerce/coverage
